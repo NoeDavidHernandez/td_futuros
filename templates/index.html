@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Passivbot Live Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0f111a;
+            --surface: rgba(255, 255, 255, 0.03);
+            --surface-border: rgba(255, 255, 255, 0.08);
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --accent: #3b82f6;
+            --success: #10b981;
+            --danger: #ef4444;
+            --glow: rgba(59, 130, 246, 0.5);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(16, 185, 129, 0.1) 0px, transparent 50%);
+            background-attachment: fixed;
+        }
+
+        .dashboard {
+            width: 90%;
+            max-width: 900px;
+            padding: 2rem;
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(to right, #60a5fa, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--surface-border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .card:hover::before { opacity: 1; }
+
+        .card.success:hover::before { background: linear-gradient(90deg, transparent, var(--success), transparent); }
+        .card.danger:hover::before { background: linear-gradient(90deg, transparent, var(--danger), transparent); }
+
+        .card-title {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .card-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+        }
+
+        .text-success { color: var(--success); }
+        .text-danger { color: var(--danger); }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: var(--text-main);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .update-indicator {
+            text-align: center;
+            margin-top: 2rem;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .dot {
+            width: 8px;
+            height: 8px;
+            background-color: var(--success);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.4; transform: scale(0.8); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        
+        .error-banner {
+            display: none;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--danger);
+            color: var(--danger);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="dashboard">
+        <header>
+            <h1>Live Portfolio</h1>
+            <p class="subtitle">Binance Futures (Auto-Sync)</p>
+        </header>
+
+        <div id="error-banner" class="error-banner"></div>
+
+        <div class="grid">
+            <div class="card">
+                <div class="card-title">Total Balance (USDT)</div>
+                <div class="card-value" id="val-balance"><div class="loading"></div></div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">Unrealized PnL</div>
+                <div class="card-value" id="val-upnl"><div class="loading"></div></div>
+            </div>
+
+            <div class="card success">
+                <div class="card-title">Winning Trades</div>
+                <div class="card-value text-success" id="val-wins"><div class="loading"></div></div>
+            </div>
+
+            <div class="card danger">
+                <div class="card-title">Losing Trades</div>
+                <div class="card-value text-danger" id="val-losses"><div class="loading"></div></div>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">Active Positions</div>
+                <div class="card-value" id="val-positions"><div class="loading"></div></div>
+            </div>
+            
+            <div class="card">
+                <div class="card-title">Total Operations (Recent)</div>
+                <div class="card-value" id="val-ops"><div class="loading"></div></div>
+            </div>
+        </div>
+
+        <div class="update-indicator">
+            <div class="dot" id="sync-dot"></div>
+            <span id="sync-text">Live Sync Active</span>
+        </div>
+    </div>
+
+    <script>
+        const formatMoney = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
+        
+        async function fetchStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const data = await response.json();
+                
+                if (data.error) {
+                    showError(data.error);
+                    return;
+                }
+
+                document.getElementById('error-banner').style.display = 'none';
+                
+                // Update Balance
+                document.getElementById('val-balance').innerText = formatMoney(data.balance);
+                
+                // Update uPnL
+                const upnlEl = document.getElementById('val-upnl');
+                upnlEl.innerText = formatMoney(data.unrealized_pnl);
+                upnlEl.className = 'card-value ' + (data.unrealized_pnl >= 0 ? 'text-success' : 'text-danger');
+                
+                // Update Stats
+                document.getElementById('val-wins').innerText = data.wins;
+                document.getElementById('val-losses').innerText = data.losses;
+                document.getElementById('val-positions').innerText = data.active_positions_count;
+                document.getElementById('val-ops').innerText = data.total_operations;
+
+                // Sync indicator flash
+                const dot = document.getElementById('sync-dot');
+                dot.style.transform = 'scale(1.5)';
+                setTimeout(() => dot.style.transform = 'scale(1)', 200);
+
+            } catch (error) {
+                console.error("Error fetching stats:", error);
+                showError("Connection lost. Retrying...");
+            }
+        }
+
+        function showError(msg) {
+            const banner = document.getElementById('error-banner');
+            banner.innerText = msg;
+            banner.style.display = 'block';
+        }
+
+        // Fetch immediately, then every 10 seconds
+        fetchStats();
+        setInterval(fetchStats, 10000);
+    </script>
+</body>
+</html>
