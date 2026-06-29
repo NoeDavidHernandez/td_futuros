@@ -240,14 +240,24 @@ class CCXTBot(Passivbot):
 
         # REST client — prefer futures-specific id (e.g. binanceusdm) over generic name
         ccxt_id = getattr(self, "exchange_ccxt_id", self.exchange)
-        if ccxt_id == "binanceusdm" and ccxt_config.get("testnet"):
+        is_testnet = ccxt_config.pop("testnet", False)
+        if ccxt_id == "binanceusdm" and is_testnet:
             ccxt_id = "binance"
+            
         exchange_class = getattr(ccxt_async, ccxt_id)
         self.cca = exchange_class(ccxt_config)
         self.cca.options.update(self._build_ccxt_options())
         self._apply_exchange_market_options(self.cca, ccxt_id)
         self.cca.options.update(user_options)
         self.cca.options["defaultType"] = "swap"
+        
+        if is_testnet and ccxt_id == "binance":
+            self.cca.urls['api']['fapiPublic'] = 'https://demo-fapi.binance.com/fapi/v1'
+            self.cca.urls['api']['fapiPrivate'] = 'https://demo-fapi.binance.com/fapi/v1'
+            self.cca.urls['api']['fapiPublicV2'] = 'https://demo-fapi.binance.com/fapi/v2'
+            self.cca.urls['api']['fapiPrivateV2'] = 'https://demo-fapi.binance.com/fapi/v2'
+            self.cca.urls['api']['fapiPrivateV3'] = 'https://demo-fapi.binance.com/fapi/v3'
+            
         self._apply_endpoint_override(self.cca)
 
         # WebSocket client - optional, enables faster order updates
@@ -258,6 +268,23 @@ class CCXTBot(Passivbot):
             self._apply_exchange_market_options(self.ccp, ccxt_id)
             self.ccp.options.update(user_options)
             self.ccp.options["defaultType"] = "swap"
+            
+            if is_testnet and ccxt_id == "binance":
+                self.ccp.urls['api']['fapiPublic'] = 'https://demo-fapi.binance.com/fapi/v1'
+                self.ccp.urls['api']['fapiPrivate'] = 'https://demo-fapi.binance.com/fapi/v1'
+                self.ccp.urls['api']['fapiPublicV2'] = 'https://demo-fapi.binance.com/fapi/v2'
+                self.ccp.urls['api']['fapiPrivateV2'] = 'https://demo-fapi.binance.com/fapi/v2'
+                self.ccp.urls['api']['fapiPrivateV3'] = 'https://demo-fapi.binance.com/fapi/v3'
+                if 'test' not in self.ccp.urls:
+                    self.ccp.urls['test'] = {}
+                if 'ws' not in self.ccp.urls['test']:
+                    self.ccp.urls['test']['ws'] = {}
+                self.ccp.urls['test']['ws']['future'] = 'wss://demo-fstream.binance.com/ws'
+                self.ccp.urls['test']['ws']['ws-api'] = {'future': 'wss://demo-fstream.binance.com/ws-fapi/v1'}
+                if 'ws' not in self.ccp.urls['api']:
+                    self.ccp.urls['api']['ws'] = {}
+                self.ccp.urls['api']['ws'].update(self.ccp.urls['test']['ws'])
+                
             self._apply_endpoint_override(self.ccp)
         else:
             self.ccp = None
