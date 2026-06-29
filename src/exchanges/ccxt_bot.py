@@ -250,6 +250,7 @@ class CCXTBot(Passivbot):
         self.cca.options["defaultType"] = "swap"
         
         if is_testnet and ccxt_id == "binanceusdm":
+            self.cca.options["fetchCurrencies"] = False
             self.cca.urls['api']['fapiPublic'] = 'https://demo-fapi.binance.com/fapi/v1'
             self.cca.urls['api']['fapiPrivate'] = 'https://demo-fapi.binance.com/fapi/v1'
             self.cca.urls['api']['fapiPublicV2'] = 'https://demo-fapi.binance.com/fapi/v2'
@@ -268,6 +269,7 @@ class CCXTBot(Passivbot):
             self.ccp.options["defaultType"] = "swap"
             
             if is_testnet and ccxt_id == "binanceusdm":
+                self.ccp.options["fetchCurrencies"] = False
                 self.ccp.urls['api']['fapiPublic'] = 'https://demo-fapi.binance.com/fapi/v1'
                 self.ccp.urls['api']['fapiPrivate'] = 'https://demo-fapi.binance.com/fapi/v1'
                 self.ccp.urls['api']['fapiPublicV2'] = 'https://demo-fapi.binance.com/fapi/v2'
