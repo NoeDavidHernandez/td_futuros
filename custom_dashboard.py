@@ -93,6 +93,13 @@ def get_logs():
     try:
         log_files = glob.glob("logs/*.log")
         if not log_files:
+            # Check if passivbot_startup.log exists (for crash debugging)
+            if os.path.exists("passivbot_startup.log"):
+                with open("passivbot_startup.log", "r", encoding="utf-8") as f:
+                    lines = f.readlines()
+                    if not lines:
+                        return jsonify({"status": "success", "logs": "Bot is starting... (no logs yet)"})
+                    return jsonify({"status": "success", "logs": "".join(lines[-100:])})
             return jsonify({"status": "success", "logs": "No log files found yet..."})
         
         # Get the most recently modified log file
