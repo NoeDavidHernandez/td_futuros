@@ -240,6 +240,8 @@ class CCXTBot(Passivbot):
 
         # REST client — prefer futures-specific id (e.g. binanceusdm) over generic name
         ccxt_id = getattr(self, "exchange_ccxt_id", self.exchange)
+        if ccxt_id == "binanceusdm" and ccxt_config.get("testnet"):
+            ccxt_id = "binance"
         exchange_class = getattr(ccxt_async, ccxt_id)
         self.cca = exchange_class(ccxt_config)
         self.cca.options.update(self._build_ccxt_options())
