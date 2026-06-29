@@ -468,9 +468,10 @@ class BinanceBot(CCXTBot):
     def _build_order_params(self, order: dict) -> dict:
         order_type = order.get("type", "limit")
         params = {
-            "positionSide": order["position_side"].upper(),
             "newClientOrderId": order["custom_id"],
         }
+        if self.hedge_mode:
+            params["positionSide"] = order["position_side"].upper()
         if order_type == "limit":
             tif = require_live_value(self.config, "time_in_force")
             params["timeInForce"] = "GTX" if tif == "post_only" else "GTC"
@@ -506,6 +507,9 @@ class BinanceBot(CCXTBot):
                 logging.info(f"{log_symbol}: {to_print}")
 
     async def update_exchange_config(self):
+        if not self.hedge_mode:
+            logging.info("[config] skipping hedge mode setting (hedge_mode=false in config)")
+            return
         try:
             res = await self.cca.set_position_mode(True)
             logging.debug("[config] set hedge mode response: %s", res)
