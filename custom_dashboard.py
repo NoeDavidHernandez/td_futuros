@@ -86,5 +86,24 @@ def stats():
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
+@app.route("/api/logs")
+def get_logs():
+    import glob
+    import os
+    try:
+        log_files = glob.glob("logs/*.log")
+        if not log_files:
+            return jsonify({"status": "success", "logs": "No log files found yet..."})
+        
+        # Get the most recently modified log file
+        latest_log = max(log_files, key=os.path.getmtime)
+        with open(latest_log, "r", encoding="utf-8") as f:
+            # Read last 100 lines
+            lines = f.readlines()
+            last_lines = lines[-100:]
+            return jsonify({"status": "success", "logs": "".join(last_lines)})
+    except Exception as e:
+        return jsonify({"status": "error", "logs": f"Error reading logs: {str(e)}"})
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
